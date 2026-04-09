@@ -464,8 +464,9 @@ export function Repositories() {
                       localStorage.removeItem('ai-code-review-token')
                       localStorage.removeItem('ai-code-review-user')
                       delete api.defaults.headers.common['Authorization']
-                      const { data } = await api.get('/auth/github', { params: { mode: 'signin' } })
-                      window.location.href = data.authUrl
+                      // Avoid CORS by doing a full-page redirect to backend OAuth init.
+                      const apiBase = import.meta.env.VITE_API_URL || '/api'
+                      window.location.href = `${apiBase}/auth/github?mode=signin`
                     } catch (error: any) {
                       toast({
                         title: 'Failed to connect GitHub',
@@ -486,8 +487,9 @@ export function Repositories() {
                       localStorage.removeItem('ai-code-review-token')
                       localStorage.removeItem('ai-code-review-user')
                       delete api.defaults.headers.common['Authorization']
-                      const { data } = await api.get('/auth/bitbucket', { params: { mode: 'signin' } })
-                      window.location.href = data.authUrl
+                      // Avoid CORS by doing a full-page redirect to backend OAuth init.
+                      const apiBase = import.meta.env.VITE_API_URL || '/api'
+                      window.location.href = `${apiBase}/auth/bitbucket?mode=signin`
                     } catch (error: any) {
                       toast({
                         title: 'Failed to connect Bitbucket',
