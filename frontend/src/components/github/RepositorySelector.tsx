@@ -3,14 +3,13 @@
  * CodeRabbit-style repository selection and management
  */
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ErrorState } from '@/components/ui/error-state'
 import { useToast } from '@/hooks/use-toast'
 import {
   Github,
@@ -54,24 +53,28 @@ export function RepositorySelector({ onRepositoryConnected }: RepositorySelector
   const queryClient = useQueryClient()
 
   // Fetch GitHub repositories
-  const { data, isLoading, error, refetch } = useQuery<{ repositories: GitHubRepository[] }>({
+  const repoQuery = useQuery({
     queryKey: ['github-repositories'],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ repositories: GitHubRepository[] }> => {
       const { data } = await api.get('/repositories/github/list')
       return data
     },
     retry: 1,
-    onError: (error: any) => {
-      // If token is invalid, mark GitHub as disconnected in user context
-      if (error?.response?.data?.requiresReconnect) {
-        updateUser({
-          githubConnected: false,
-          githubUsername: undefined,
-        })
-        queryClient.invalidateQueries({ queryKey: ['repositories'] })
-      }
-    },
   })
+
+  const { data, isLoading, error, refetch } = repoQuery
+
+  // If token is invalid, mark GitHub as disconnected in user context
+  useEffect(() => {
+    const err: any = error
+    if (err?.response?.data?.requiresReconnect) {
+      updateUser({
+        githubConnected: false,
+        githubUsername: undefined,
+      })
+      queryClient.invalidateQueries({ queryKey: ['repositories'] })
+    }
+  }, [error, queryClient, updateUser])
 
   // Connect repository mutation
   const connectMutation = useMutation({
@@ -115,10 +118,11 @@ export function RepositorySelector({ onRepositoryConnected }: RepositorySelector
   )
 
   // Filter out already connected repositories from the list
-  const unconnectedRepos = data?.repositories.filter((repo) => !connectedRepoIds.has(repo.id)) || []
+  const unconnectedRepos =
+    data?.repositories.filter((repo: GitHubRepository) => !connectedRepoIds.has(repo.id)) || []
 
   // Filter unconnected repositories by search
-  const filteredRepos = unconnectedRepos.filter((repo) =>
+  const filteredRepos = unconnectedRepos.filter((repo: GitHubRepository) =>
     repo.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     repo.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -153,7 +157,7 @@ export function RepositorySelector({ onRepositoryConnected }: RepositorySelector
       return
     }
 
-    const reposToConnect = filteredRepos.filter((r) => selectedRepos.has(r.id))
+    const reposToConnect = filteredRepos.filter((r: GitHubRepository) => selectedRepos.has(r.id))
 
     for (const repo of reposToConnect) {
       await connectMutation.mutateAsync(repo)

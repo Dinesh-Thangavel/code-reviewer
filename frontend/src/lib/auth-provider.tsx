@@ -9,6 +9,8 @@ interface User {
   avatar?: string
   githubConnected?: boolean
   githubUsername?: string
+  bitbucketConnected?: boolean
+  bitbucketUsername?: string
 }
 
 interface AuthContextType {

@@ -92,8 +92,8 @@ export const useApplyFix = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (issueId: string) => {
-      const { data } = await api.post(`/issues/${issueId}/apply-fix`)
+    mutationFn: async ({ issueId, customFix }: { issueId: string; customFix?: string }) => {
+      const { data } = await api.post(`/issues/${issueId}/apply-fix`, customFix ? { customFix } : undefined)
       return data
     },
     onSuccess: () => {

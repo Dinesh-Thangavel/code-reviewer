@@ -46,6 +46,7 @@ interface PRFilesResponse {
 
 interface PRFileChangesProps {
   prId: string
+  repoFullName?: string
 }
 
 function FileDiffView({ file, prId, repoFullName }: { file: PRFile; prId?: string; repoFullName?: string }) {

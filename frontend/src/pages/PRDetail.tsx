@@ -536,7 +536,7 @@ export function PRDetail() {
 
         {/* PR File Changes Viewer */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-          <PRFileChanges prId={id!} repoFullName={prDetail?.repo} />
+          <PRFileChanges prId={id!} repoFullName={prDetail.repo} />
         </motion.div>
 
         {/* Issues by Severity */}
@@ -610,7 +610,7 @@ export function PRDetail() {
                                   onRejectFix={handleRejectFix}
                                   onRollbackFix={handleRollbackFix}
                                   prId={id}
-                                  repoFullName={prDetail?.repository?.fullName}
+                                  repoFullName={prDetail.repo}
                                 />
                             </motion.div>
                           ))}
@@ -642,7 +642,9 @@ export function PRDetail() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) =>
+                            `${name} ${(((percent ?? 0) as number) * 100).toFixed(0)}%`
+                          }
                           outerRadius={100}
                           fill="#8884d8"
                           dataKey="value"
