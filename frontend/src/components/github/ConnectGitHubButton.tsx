@@ -28,7 +28,7 @@ export function ConnectGitHubButton({ onConnected }: ConnectGitHubButtonProps) {
       // Avoid CORS by redirecting the browser directly to backend OAuth init.
       // VITE_API_URL should be like: https://<backend>/api
       const apiBase = import.meta.env.VITE_API_URL || '/api'
-      window.location.href = `${apiBase}/auth/github`
+      window.location.href = `${apiBase}/auth/github?redirect=1`
     } catch (error: any) {
       toast({
         title: 'Failed to connect GitHub',

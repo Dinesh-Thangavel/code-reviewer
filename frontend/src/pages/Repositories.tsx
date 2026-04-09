@@ -466,7 +466,7 @@ export function Repositories() {
                       delete api.defaults.headers.common['Authorization']
                       // Avoid CORS by doing a full-page redirect to backend OAuth init.
                       const apiBase = import.meta.env.VITE_API_URL || '/api'
-                      window.location.href = `${apiBase}/auth/github?mode=signin`
+                      window.location.href = `${apiBase}/auth/github?mode=signin&redirect=1`
                     } catch (error: any) {
                       toast({
                         title: 'Failed to connect GitHub',
@@ -489,7 +489,7 @@ export function Repositories() {
                       delete api.defaults.headers.common['Authorization']
                       // Avoid CORS by doing a full-page redirect to backend OAuth init.
                       const apiBase = import.meta.env.VITE_API_URL || '/api'
-                      window.location.href = `${apiBase}/auth/bitbucket?mode=signin`
+                      window.location.href = `${apiBase}/auth/bitbucket?mode=signin&redirect=1`
                     } catch (error: any) {
                       toast({
                         title: 'Failed to connect Bitbucket',
