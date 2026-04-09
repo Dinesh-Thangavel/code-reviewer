@@ -1,0 +1,84 @@
+﻿src/components/layout/Layout.tsx(7,8): error TS2741: Property 'onMenuToggle' is missing in type '{}' but required in type 'HeaderProps'.
+src/components/layout/Sidebar.tsx(9,3): error TS6133: 'Menu' is declared but its value is never read.
+src/components/layout/Sidebar.tsx(97,35): error TS6133: 'index' is declared but its value is never read.
+src/components/ui/collapsible.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/hooks/usePullRequests.ts(2,1): error TS6133: 'api' is declared but its value is never read.
+src/pages/Insights.tsx(20,1): error TS6133: 'Skeleton' is declared but its value is never read.
+src/pages/Insights.tsx(107,19): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: string; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues$1 | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/pages/Insights.tsx(115,9): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: string; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues$1 | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/pages/Insights.tsx(151,9): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: string; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues$1 | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/pages/Insights.tsx(207,33): error TS2339: Property 'language' does not exist on type 'PieLabelRenderProps'.
+src/pages/Insights.tsx(207,43): error TS2339: Property 'percentage' does not exist on type 'PieLabelRenderProps'.
+src/pages/Insights.tsx(214,56): error TS6133: 'entry' is declared but its value is never read.
+src/pages/Insights.tsx(256,9): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: string; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues$1 | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/pages/Insights.tsx(321,9): error TS2322: Type '{ hidden: { opacity: number; y: number; }; visible: { opacity: number; y: number; transition: { duration: number; ease: string; }; }; }' is not assignable to type 'Variants'.
+  Property 'visible' is incompatible with index signature.
+    Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'Variant'.
+      Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ opacity: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues$1 | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/pages/PRDetail.tsx(22,52): error TS6133: 'Legend' is declared but its value is never read.
+src/pages/PRDetail.tsx(52,10): error TS6133: 'getSeverityLabel' is declared but its value is never read.
+src/pages/PRDetail.tsx(78,28): error TS6133: 'language' is declared but its value is never read.
+src/pages/PRDetail.tsx(249,62): error TS6133: 'index' is declared but its value is never read.
+src/pages/PRDetail.tsx(342,19): error TS2304: Cannot find name 'toast'.
+src/pages/PRDetail.tsx(356,19): error TS2304: Cannot find name 'toast'.
+src/pages/PRDetail.tsx(475,63): error TS18048: 'percent' is possibly 'undefined'.
+src/pages/PRDetail.tsx(480,40): error TS6133: 'entry' is declared but its value is never read.
+src/pages/PRDetail.tsx(490,21): error TS2322: Type '(value: number, name: string, props: any) => [string, `${any} (${any} files, ${any} lines)`]' is not assignable to type 'Formatter<number, string> & ((value: number, name: string, item: Payload<number, string>, index: number, payload: Payload<number, string>[]) => ReactNode | [...])'.
+  Type '(value: number, name: string, props: any) => [string, `${any} (${any} files, ${any} lines)`]' is not assignable to type 'Formatter<number, string>'.
+    Types of parameters 'value' and 'value' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/pages/PRDetail.tsx(490,48): error TS6133: 'name' is declared but its value is never read.
+src/pages/PullRequests.tsx(9,1): error TS6133: 'Skeleton' is declared but its value is never read.
+src/pages/PullRequests.tsx(35,24): error TS6133: 'PullRequest' is declared but its value is never read.
+src/pages/Repositories.tsx(2,18): error TS6133: 'AnimatePresence' is declared but its value is never read.
+src/pages/Repositories.tsx(3,21): error TS6133: 'X' is declared but its value is never read.
+src/pages/Repositories.tsx(10,1): error TS6133: 'Input' is declared but its value is never read.
+src/pages/Settings.tsx(6,1): error TS6133: 'Switch' is declared but its value is never read.

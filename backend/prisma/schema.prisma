@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StrictnessLevel {
+  RELAXED
+  BALANCED
+  STRICT
+}
+
+enum PRStatus {
+  OPEN
+  CLOSED
+  MERGED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ReviewStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum FixStatus {
+  PENDING
+  APPLIED
+  REJECTED
+  FAILED
+}
+
+enum RepositoryProvider {
+  GITHUB
+  BITBUCKET
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  name                    String
+  password                String
+  avatar                  String?
+  githubId                String?   @unique
+  githubUsername          String?
+  githubToken             String?   @db.Text // Encrypted OAuth token
+  githubTokenExpiresAt    DateTime? // Token expiration
+  githubConnected         Boolean   @default(false)
+  bitbucketId             String?   @unique
+  bitbucketUsername       String?
+  bitbucketToken          String?   @db.Text // Encrypted OAuth token
+  bitbucketTokenExpiresAt DateTime? // Token expiration
+  bitbucketConnected      Boolean   @default(false)
+  emailNotifications      Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  repositories  Repository[]
+  auditLogs     AuditLog[]     @relation("AuditLogUser")
+  notifications Notification[]
+}
+
+model Repository {
+  id                 String             @id @default(uuid())
+  name               String
+  fullName           String             @unique
+  provider           RepositoryProvider @default(GITHUB)
+  isActive           Boolean            @default(true)
+  autoReview         Boolean            @default(true)
+  installationId     String?
+  userId             String? // User who connected this repo via OAuth
+  githubRepoId       Int? // GitHub repository ID
+  bitbucketRepoUuid  String? // Bitbucket repository UUID
+  bitbucketWorkspace String? // Bitbucket workspace (owner)
+  isUserConnected    Boolean            @default(false) // OAuth vs GitHub App
+  strictness         StrictnessLevel    @default(BALANCED)
+  languages          String?            @db.Text // JSON array stored as text
+  ignorePaths        String?            @db.Text // JSON array stored as text
+  configYaml         String?            @db.Text // YAML configuration content
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id])
+  pullRequests PullRequest[]
+  auditLogs    AuditLog[]    @relation("AuditLogRepository")
+
+  @@index([userId])
+  @@index([provider])
+}
+
+model PullRequest {
+  id                    String    @id @default(uuid())
+  repoId                String
+  number                Int
+  title                 String
+  author                String
+  status                PRStatus  @default(OPEN)
+  riskLevel             RiskLevel @default(LOW)
+  headSha               String?
+  baseBranch            String?   @default("main")
+  lastReviewedCommitSha String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  repository Repository @relation(fields: [repoId], references: [id])
+  reviews    Review[]
+
+  @@unique([repoId, number])
+}
+
+model Review {
+  id              String       @id @default(uuid())
+  prId            String
+  summary         String       @db.Text
+  status          ReviewStatus @default(PENDING)
+  confidenceScore Float
+  riskLevel       RiskLevel    @default(LOW)
+  filesChanged    Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  pullRequest PullRequest @relation(fields: [prId], references: [id])
+  issues      Issue[]
+}
+
+model Issue {
+  id               String    @id @default(uuid())
+  reviewId         String
+  severity         String
+  filePath         String
+  lineNumber       Int
+  title            String
+  description      String    @db.Text
+  suggestedFix     String?   @db.Text
+  alternativeFixes String?   @db.Text // JSON array of alternative fix suggestions
+  language         String
+  fixStatus        FixStatus @default(PENDING)
+  appliedAt        DateTime?
+  commitSha        String?
+  fixBranch        String?
+  userFeedback     String? // 'accepted', 'rejected', 'modified'
+  feedbackNote     String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  review Review @relation(fields: [reviewId], references: [id])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  repositoryId String?
+  action       String // 'fix_applied', 'fix_rejected', 'review_rerun', 'repo_connected', etc.
+  entityType   String // 'issue', 'review', 'repository', 'user'
+  entityId     String?
+  details      String?  @db.Text // JSON details
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user       User?       @relation("AuditLogUser", fields: [userId], references: [id])
+  repository Repository? @relation("AuditLogRepository", fields: [repositoryId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String // 'review_completed', 'fix_applied', 'critical_issue', etc.
+  title     String
+  message   String    @db.Text
+  read      Boolean   @default(false)
+  link      String? // URL to related resource
+  metadata  String?   @db.Text // JSON metadata
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model ReviewMetrics {
+  id               String   @id @default(uuid())
+  repositoryId     String?
+  date             DateTime @default(now())
+  reviewsCompleted Int      @default(0)
+  reviewsFailed    Int      @default(0)
+  avgReviewTime    Float // in seconds
+  totalIssues      Int      @default(0)
+  criticalIssues   Int      @default(0)
+  fixesApplied     Int      @default(0)
+  fixesRejected    Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@unique([repositoryId, date])
+  @@index([repositoryId, date])
+}
