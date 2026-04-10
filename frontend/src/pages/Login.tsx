@@ -37,9 +37,33 @@ export function Login() {
     if (errorParam === 'missing_params') {
       errorMessage = 'Missing OAuth parameters. Please try signing in again.'
     } else if (errorParam === 'invalid_state') {
-      errorMessage = 'OAuth state expired or invalid. Please try again.'
+      errorMessage =
+        'OAuth session expired (try again). If this keeps happening, the server may have restarted between steps—try once more from the login page.'
+    } else if (errorParam === 'db_offline' || errorParam === 'db_error') {
+      errorMessage =
+        'Cannot reach the database. Check DATABASE_URL on Render and that Supabase allows connections from Render.'
+    } else if (errorParam === 'oauth_redirect_mismatch') {
+      errorMessage =
+        'GitHub rejected the redirect URL. On GitHub App settings, set the callback URL to exactly: https://YOUR-RENDER-HOST/api/auth/github/callback and set the same value as GITHUB_OAUTH_REDIRECT_URI on Render.'
+    } else if (errorParam === 'oauth_bad_credentials') {
+      errorMessage =
+        'Invalid GitHub OAuth client ID or secret. In Render, set GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET from your GitHub App (Client ID + generate a new client secret).'
+    } else if (errorParam === 'oauth_not_configured') {
+      errorMessage =
+        'GitHub OAuth is not configured on the server. Add GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET to Render.'
+    } else if (errorParam === 'oauth_bad_code') {
+      errorMessage =
+        'Authorization code was invalid or already used. Close the tab and sign in with GitHub again from the login page.'
+    } else if (errorParam === 'oauth_token_exchange') {
+      errorMessage =
+        'Could not exchange the GitHub code for a token. Check callback URL, client secret, and Render logs for details.'
+    } else if (errorParam === 'oauth_github_user') {
+      errorMessage = 'Signed in with GitHub but could not load your profile. Try again or check API rate limits.'
     } else if (errorParam.includes('Token exchange failed')) {
       errorMessage = 'Failed to exchange authorization code. Please check your OAuth configuration.'
+    } else if (errorParam === 'oauth_failed') {
+      errorMessage =
+        'GitHub sign-in failed. Open Render → Logs, retry sign-in, and search for [OAuth] for the exact error.'
     } else {
       errorMessage = `Sign-in failed: ${decodeURIComponent(errorParam)}`
     }

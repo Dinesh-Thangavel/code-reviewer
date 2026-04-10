@@ -18,6 +18,7 @@ import * as crypto from 'crypto';
 import { createAuditLog } from '../services/auditLog';
 import { getUserIdFromToken, signToken } from '../utils/jwt';
 import { getFrontendBaseUrl } from '../utils/frontendUrl';
+import { oauthCallbackErrorCode } from '../utils/oauthErrorCode';
 
 /**
  * Initiate GitHub OAuth flow
@@ -355,16 +356,16 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
             res.redirect(`${getFrontendBaseUrl()}/repositories?github_connected=true`);
         }
     } catch (error: any) {
-        console.error('Error handling OAuth callback:', error);
-        console.error('Error details:', {
-            message: error.message,
-            stack: error.stack,
-            code: error.code,
-            response: error.response?.data,
-        });
-        const rawMessage: string = error?.message || 'oauth_failed';
+        const rawMessage: string = error?.message || String(error);
 
-        // Prisma DB connection errors can show up as "Invalid prisma... Can't reach database server"
+        console.error('[OAuth] Callback failed:', rawMessage);
+        console.error('[OAuth] Details:', {
+            message: error?.message,
+            stack: error?.stack,
+            code: error?.code,
+            github: error?.response?.data,
+        });
+
         const isDbOffline =
             rawMessage.includes("Can't reach database server") ||
             rawMessage.includes('PrismaClientInitializationError') ||
@@ -372,9 +373,8 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
             rawMessage.toLowerCase().includes('connection refused') ||
             rawMessage.toLowerCase().includes('econnrefused');
 
-        const errorCode = isDbOffline ? 'db_offline' : 'oauth_failed';
+        const errorCode = isDbOffline ? 'db_offline' : oauthCallbackErrorCode(error);
 
-        // Redirect with a stable error code (frontend can show a friendly message)
         res.redirect(`${getFrontendBaseUrl()}/login?error=${encodeURIComponent(errorCode)}`);
     }
 };

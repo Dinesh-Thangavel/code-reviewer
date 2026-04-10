@@ -6,9 +6,11 @@
 import axios from 'axios';
 import * as crypto from 'crypto';
 
-const GITHUB_CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || '';
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_OAUTH_CLIENT_SECRET || '';
-const GITHUB_REDIRECT_URI = process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:5000/api/auth/github/callback';
+const GITHUB_CLIENT_ID = (process.env.GITHUB_OAUTH_CLIENT_ID || '').trim();
+const GITHUB_CLIENT_SECRET = (process.env.GITHUB_OAUTH_CLIENT_SECRET || '').trim();
+const GITHUB_REDIRECT_URI = (
+    process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:5000/api/auth/github/callback'
+).trim();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // Log OAuth configuration on startup (without secrets)
@@ -110,7 +112,9 @@ export const exchangeCodeForToken = async (code: string): Promise<string> => {
 
         if (response.data.error) {
             console.error('[OAuth] GitHub returned error:', response.data);
-            throw new Error(response.data.error_description || response.data.error);
+            const gh = response.data.error;
+            const desc = response.data.error_description || '';
+            throw new Error(desc ? `${gh}: ${desc}` : String(gh));
         }
 
         if (!response.data.access_token) {
