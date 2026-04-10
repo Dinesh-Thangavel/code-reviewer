@@ -143,23 +143,31 @@ export const getGitHubUser = async (token: string): Promise<{
     avatar_url: string;
 }> => {
     try {
-        const [userResponse, emailsResponse] = await Promise.all([
-            axios.get('https://api.github.com/user', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
-                },
-            }),
-            axios.get('https://api.github.com/user/emails', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
-                },
-            }),
-        ]);
+        const userResponse = await axios.get('https://api.github.com/user', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.github.v3+json',
+            },
+        });
 
         const user = userResponse.data;
-        const emails = emailsResponse.data;
+        let emails: any[] = [];
+        try {
+            const emailsResponse = await axios.get('https://api.github.com/user/emails', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            emails = Array.isArray(emailsResponse.data) ? emailsResponse.data : [];
+        } catch (emailError: any) {
+            // Some GitHub token types can access /user but not /user/emails.
+            // Do not fail OAuth just because private emails are unavailable.
+            console.warn('[OAuth] Could not fetch /user/emails, falling back to /user email:', {
+                status: emailError?.response?.status,
+                message: emailError?.message,
+            });
+        }
         const primaryEmail =
             emails.find((e: any) => e.primary)?.email || emails[0]?.email || user.email;
         // Prisma requires email; GitHub may return none if email is private and scopes/emails empty
