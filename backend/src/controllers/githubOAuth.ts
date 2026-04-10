@@ -17,6 +17,7 @@ import prisma from '../db';
 import * as crypto from 'crypto';
 import { createAuditLog } from '../services/auditLog';
 import { getUserIdFromToken, signToken } from '../utils/jwt';
+import { getFrontendBaseUrl } from '../utils/frontendUrl';
 
 /**
  * Initiate GitHub OAuth flow
@@ -65,7 +66,7 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
         const { code, state } = req.query;
 
         if (!code || !state) {
-            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=missing_params`);
+            return res.redirect(`${getFrontendBaseUrl()}/login?error=missing_params`);
         }
 
         // Verify state
@@ -76,7 +77,7 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
                 valid: stateVerification.valid,
                 userId: stateVerification.userId,
             });
-            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=invalid_state`);
+            return res.redirect(`${getFrontendBaseUrl()}/login?error=invalid_state`);
         }
         
         console.log('[OAuth] State verified successfully:', {
@@ -274,7 +275,7 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
             }
 
             // Redirect to repositories page (CodeRabbit-style: show repos immediately)
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${token}&github_signin=true&redirect=repositories`);
+            res.redirect(`${getFrontendBaseUrl()}/auth/callback?token=${token}&github_signin=true&redirect=repositories`);
         } else {
             // Connect mode: Update existing user
             const encryptedToken = encryptToken(accessToken);
@@ -351,7 +352,7 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
             }
 
             // Redirect to repositories page with success
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/repositories?github_connected=true`);
+            res.redirect(`${getFrontendBaseUrl()}/repositories?github_connected=true`);
         }
     } catch (error: any) {
         console.error('Error handling OAuth callback:', error);
@@ -374,7 +375,7 @@ export const handleOAuthCallback = async (req: Request, res: Response) => {
         const errorCode = isDbOffline ? 'db_offline' : 'oauth_failed';
 
         // Redirect with a stable error code (frontend can show a friendly message)
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=${encodeURIComponent(errorCode)}`);
+        res.redirect(`${getFrontendBaseUrl()}/login?error=${encodeURIComponent(errorCode)}`);
     }
 };
 
