@@ -156,13 +156,17 @@ export const getGitHubUser = async (token: string): Promise<{
 
         const user = userResponse.data;
         const emails = emailsResponse.data;
-        const primaryEmail = emails.find((e: any) => e.primary)?.email || emails[0]?.email || user.email;
+        const primaryEmail =
+            emails.find((e: any) => e.primary)?.email || emails[0]?.email || user.email;
+        // Prisma requires email; GitHub may return none if email is private and scopes/emails empty
+        const email =
+            primaryEmail || `${user.id}+${user.login}@users.noreply.github.com`;
 
         return {
             id: user.id,
             login: user.login,
             name: user.name || user.login,
-            email: primaryEmail,
+            email,
             avatar_url: user.avatar_url,
         };
     } catch (error: any) {
