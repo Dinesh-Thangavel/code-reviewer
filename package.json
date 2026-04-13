@@ -7,6 +7,7 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "morgan": "^1.10.1",
+    "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -19,5 +20,24 @@
     "prisma": "^7.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
-  }
+  },
+  "name": "coder",
+  "version": "1.0.0",
+  "description": "A full-stack application for automated code review using AI. This guide covers deployment options and requirements.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dinesh-Thangavel/code-reviewer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Dinesh-Thangavel/code-reviewer/issues"
+  },
+  "homepage": "https://github.com/Dinesh-Thangavel/code-reviewer#readme"
 }
