@@ -39,8 +39,8 @@ router.get('/', async (_req, res) => {
 });
 
 router.get('/ollama', async (_req, res) => {
-    // Explicitly report that Ollama is not in use
-    res.status(404).json({ status: 'disabled', message: 'Ollama is not enabled on this deployment' });
+    // Explicitly report that Ollama is not in use, but return 200 to avoid noisy client errors
+    res.status(200).json({ status: 'disabled', message: 'Ollama is not enabled on this deployment' });
 });
 
 /**
