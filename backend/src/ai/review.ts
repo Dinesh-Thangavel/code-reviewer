@@ -11,14 +11,14 @@ import { getRulesForLanguage } from './reviewRules';
 import { detectBreakingChanges, generateBreakingChangeReport } from '../services/breakingChangeDetector';
 
 // Determine which AI provider to use (CodeRabbit uses Claude primarily)
-// Priority: Claude > GPT-4 > Gemini > Ollama
+// Priority: Claude > GPT-4 > Gemini
 const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
 const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLowerCase() === 'anthropic') && !!process.env.ANTHROPIC_API_KEY;
 const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
 const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY && !useClaude && !useOpenAI;
 
 if (!useClaude && !useOpenAI && !useGemini) {
-    throw new Error('No AI provider configured. Set AI_PROVIDER=claude and provide ANTHROPIC_API_KEY (or configure OpenAI/Gemini). Ollama is disabled in this deployment.');
+    throw new Error('No AI provider configured. Set AI_PROVIDER=claude and provide ANTHROPIC_API_KEY (or configure OpenAI/Gemini).');
 }
 
 export interface ReviewResult {
@@ -141,7 +141,7 @@ export const reviewPullRequest = async (
             // Chunking Logic - Skip very large files to avoid timeouts
             const MAX_FILE_SIZE = 10000; // Skip files larger than 10KB
             if (file.patch.length > MAX_FILE_SIZE) {
-                console.log(`[AI/Ollama] Skipping very large file ${file.filename} (${file.patch.length} chars > ${MAX_FILE_SIZE} limit)`);
+                console.log(`[AI] Skipping very large file ${file.filename} (${file.patch.length} chars > ${MAX_FILE_SIZE} limit)`);
                 return {
                     summary: `File ${file.filename} is too large to review (${file.patch.length} chars). Skipped.`,
                     issues: [],
@@ -152,7 +152,7 @@ export const reviewPullRequest = async (
             }
 
             // Improved chunking: split by diff hunks to preserve line number context
-            // Claude/GPT-4 can handle larger chunks, Ollama/Gemini need smaller
+            // Claude/GPT-4 can handle larger chunks; Gemini needs smaller
             const MAX_CHUNK_SIZE = useClaude || useOpenAI ? 8000 : 4000;
             const patches: string[] = [];
 
@@ -255,10 +255,7 @@ export const reviewPullRequest = async (
                             { temperature: 0.1, format: 'json' } // Gemini: 0.1 for accuracy
                         );
                     } else {
-                        content = await ollamaChat(
-                            [{ role: 'system', content: prompt }],
-                            { temperature: 0.1, format: 'json' } // Ollama: 0.1 for accuracy
-                        );
+                        throw new Error('No AI provider configured. Set AI_PROVIDER and API key.');
                     }
 
                     if (!content) {
@@ -311,7 +308,7 @@ export const reviewPullRequest = async (
                     console.log(`[AI] Successfully parsed review for chunk ${index}: ${validated.issues.length} issues found, confidence: ${validated.confidenceScore}%`);
                     return validated;
                 } catch (e: any) {
-                    const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+                    const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'none';
                     console.error(`[AI/${providerName}] Failed to review chunk ${index} of ${file.filename}:`, e.message);
                     console.error(`[AI/${providerName}] Error stack:`, e.stack);
                     if (e.response) {
@@ -375,7 +372,7 @@ Return this exact JSON structure:
                         ? await openaiChat([{ role: 'user', content: simplePrompt }], { temperature: 0.1, format: 'json' })
                         : useGemini
                         ? await geminiChat([{ role: 'user', content: simplePrompt }], { temperature: 0.1, format: 'json' })
-                        : await ollamaChat([{ role: 'user', content: simplePrompt }], { temperature: 0.1, format: 'json' });
+                        : null;
 
                     if (fallbackContent) {
                         console.log(`[AI] Fallback response received, length: ${fallbackContent.length}`);
@@ -525,7 +522,7 @@ Return this exact JSON structure:
             };
 
         } catch (error: any) {
-            const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+            const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : 'Gemini';
             console.error(`[AI/${providerName}] Failed to review file ${file.filename}:`, error.message);
             console.error(`[AI/${providerName}] Error stack:`, error.stack);
             console.error(`[AI/${providerName}] File patch length:`, file.patch.length);
@@ -663,7 +660,7 @@ ${nextSteps}
             }
         }
     } catch (error: any) {
-        const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+        const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : 'Gemini';
         console.error(`[AI/${providerName}] Error detecting breaking changes:`, error);
     }
 

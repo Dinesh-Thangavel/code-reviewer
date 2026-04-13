@@ -3,7 +3,9 @@
  * Generates unit tests for code changes
  */
 
-import { ollamaChat } from '../ai/ollamaClient';
+import { claudeChat } from '../ai/claudeClient';
+import { openaiChat } from '../ai/openaiClient';
+import { geminiChat } from '../ai/geminiClient';
 
 export interface TestGenerationOptions {
     code: string;
@@ -53,28 +55,14 @@ ${existingTests}
 **Output**: Return only the test code, no explanations.
 `;
 
-    try {
-        const response = await ollamaChat(
-            [
-                {
-                    role: 'system',
-                    content: 'You are an expert at writing unit tests. Generate high-quality, comprehensive test code.',
-                },
-                {
-                    role: 'user',
-                    content: prompt,
-                },
-            ],
-            {
-                temperature: 0.3, // Lower temperature for more consistent test generation
-                format: '', // Plain text
-            }
-        );
+    const provider = selectProvider();
+    const messages = [
+        { role: 'system', content: 'You are an expert at writing unit tests. Generate high-quality, comprehensive test code.' },
+        { role: 'user', content: prompt },
+    ];
 
-        return response.trim();
-    } catch (error: any) {
-        throw new Error(`Failed to generate tests: ${error.message}`);
-    }
+    const response = await callProvider(provider, messages, { temperature: 0.3 });
+    return response.trim();
 };
 
 /**
@@ -128,23 +116,14 @@ Provide a JSON response with:
 Return only valid JSON, no markdown.
 `;
 
+    const provider = selectProvider();
+    const messages = [
+        { role: 'system', content: 'You are a test coverage analysis expert. Analyze test coverage and provide detailed feedback.' },
+        { role: 'user', content: prompt },
+    ];
+
     try {
-        const response = await ollamaChat(
-            [
-                {
-                    role: 'system',
-                    content: 'You are a test coverage analysis expert. Analyze test coverage and provide detailed feedback.',
-                },
-                {
-                    role: 'user',
-                    content: prompt,
-                },
-            ],
-            {
-                temperature: 0.2,
-                format: 'json',
-            }
-        );
+        const response = await callProvider(provider, messages, { temperature: 0.2, format: 'json' });
 
         // Parse JSON response
         let cleanResponse = response.trim();
@@ -173,4 +152,32 @@ Return only valid JSON, no markdown.
             suggestions: ['Unable to analyze test coverage'],
         };
     }
+};
+
+type Provider = 'claude' | 'openai' | 'gemini';
+
+const selectProvider = (): Provider => {
+    const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
+    const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLowerCase() === 'anthropic') && !!process.env.ANTHROPIC_API_KEY;
+    const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
+    const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY;
+
+    if (useClaude) return 'claude';
+    if (useOpenAI) return 'openai';
+    if (useGemini) return 'gemini';
+    throw new Error('No AI provider configured. Set AI_PROVIDER and API key.');
+};
+
+const callProvider = async (
+    provider: Provider,
+    messages: Array<{ role: string; content: string }>,
+    options: { temperature?: number; format?: string }
+): Promise<string> => {
+    if (provider === 'claude') {
+        return claudeChat(messages, options);
+    }
+    if (provider === 'openai') {
+        return openaiChat(messages, options);
+    }
+    return geminiChat(messages, options);
 };
