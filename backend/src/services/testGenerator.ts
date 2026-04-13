@@ -56,7 +56,7 @@ ${existingTests}
 `;
 
     const provider = selectProvider();
-    const messages = [
+    const messages: ChatMessage[] = [
         { role: 'system', content: 'You are an expert at writing unit tests. Generate high-quality, comprehensive test code.' },
         { role: 'user', content: prompt },
     ];
@@ -117,7 +117,7 @@ Return only valid JSON, no markdown.
 `;
 
     const provider = selectProvider();
-    const messages = [
+    const messages: ChatMessage[] = [
         { role: 'system', content: 'You are a test coverage analysis expert. Analyze test coverage and provide detailed feedback.' },
         { role: 'user', content: prompt },
     ];
@@ -155,6 +155,7 @@ Return only valid JSON, no markdown.
 };
 
 type Provider = 'claude' | 'openai' | 'gemini';
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 const selectProvider = (): Provider => {
     const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
@@ -170,7 +171,7 @@ const selectProvider = (): Provider => {
 
 const callProvider = async (
     provider: Provider,
-    messages: Array<{ role: string; content: string }>,
+    messages: ChatMessage[],
     options: { temperature?: number; format?: string }
 ): Promise<string> => {
     if (provider === 'claude') {
