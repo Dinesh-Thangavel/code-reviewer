@@ -1,11 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
-import prisma from '../db';
-import { getPullRequestFiles, getInstallationAccessToken } from '../services/githubApi';
-import { getBitbucketPRFiles, postBitbucketReviewComment, postBitbucketInlineComments, postBitbucketStatus } from '../services/bitbucketApi';
-import { decryptToken } from '../services/bitbucketOAuth';
-import { reviewPullRequest } from '../ai/review';
-import { createPRReview, convertIssuesToGitHubComments } from '../services/githubReview';
+import { executeReview } from '../services/reviewExecutor';
 
 // Guard: only connect if Redis is configured
 const redisHost = process.env.REDIS_HOST;

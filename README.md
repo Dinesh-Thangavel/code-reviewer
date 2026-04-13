@@ -30,6 +30,7 @@ Create a `.env` file in the `backend/` directory:
 ```env
 # Database
 DATABASE_URL="postgresql://postgres:<pwd>@db.<project>.supabase.co:6543/postgres?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgresql://postgres:<pwd>@db.<project>.supabase.co:5432/postgres?sslmode=require"
 
 # Server
 PORT=5000
@@ -146,11 +147,14 @@ cd backend
 
 # 1) Set DATABASE_URL to your Supabase pooled URL (port 6543, sslmode=require)
 # Example: postgresql://postgres:<pwd>@db.<project>.supabase.co:6543/postgres?sslmode=require&pgbouncer=true
+#
+# 2) Set DIRECT_URL to your Supabase direct URL (port 5432, sslmode=require)
+# Example: postgresql://postgres:<pwd>@db.<project>.supabase.co:5432/postgres?sslmode=require
 
-# 2) Generate Prisma Client
+# 3) Generate Prisma Client
 npm run prisma:generate
 
-# 3) Apply migrations to Supabase
+# 4) Apply migrations to Supabase
 npm run prisma:migrate
 
 # (Optional) Seed database
