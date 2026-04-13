@@ -49,7 +49,6 @@ export function Settings() {
   const [notifications, setNotifications] = useState<NotificationPrefs>(loadNotifications())
   const [notifDirty, setNotifDirty] = useState(false)
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking')
-  const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
 
   useEffect(() => {
     if (!user) return
@@ -62,7 +61,6 @@ export function Settings() {
 
   useEffect(() => {
     api.get('/health').then(() => setBackendStatus('online')).catch(() => setBackendStatus('offline'))
-    api.get('/health/ollama').then(() => setOllamaStatus('online')).catch(() => setOllamaStatus('offline'))
   }, [])
 
   const handleSaveProfile = async () => {
@@ -145,7 +143,7 @@ export function Settings() {
             <div className="flex h-10 items-center rounded-xl border border-border/60 bg-background/70 px-3">
               <span className="text-[11px] uppercase tracking-[0.14em] mr-2">Services</span>
               <span className="text-base font-semibold text-foreground">
-                {backendStatus === 'online' && ollamaStatus === 'online' ? 'Healthy' : 'Needs attention'}
+                {backendStatus === 'online' ? 'Backend online' : 'Backend offline'}
               </span>
             </div>
           </div>

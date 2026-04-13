@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { checkOllamaHealth } from '../ai/ollamaClient';
 import { checkGeminiHealth } from '../ai/geminiClient';
 import { checkClaudeHealth } from '../ai/claudeClient';
 import { checkOpenAIHealth } from '../ai/openaiClient';
@@ -26,7 +25,7 @@ router.get('/', async (_req, res) => {
         aiHealth = await checkGeminiHealth();
         providerName = 'gemini';
     } else {
-        aiHealth = await checkOllamaHealth();
+        aiHealth = { available: false, message: 'Ollama disabled' };
         providerName = 'ollama';
     }
     
@@ -40,16 +39,8 @@ router.get('/', async (_req, res) => {
 });
 
 router.get('/ollama', async (_req, res) => {
-    try {
-        const result = await checkOllamaHealth();
-        if (result.available) {
-            res.json({ status: 'ok', ...result });
-        } else {
-            res.status(503).json({ status: 'unavailable', ...result });
-        }
-    } catch (error: any) {
-        res.status(500).json({ status: 'error', message: error.message });
-    }
+    // Explicitly report that Ollama is not in use
+    res.status(404).json({ status: 'disabled', message: 'Ollama is not enabled on this deployment' });
 });
 
 /**

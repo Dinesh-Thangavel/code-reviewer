@@ -17,6 +17,10 @@ const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLower
 const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
 const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY && !useClaude && !useOpenAI;
 
+if (!useClaude && !useOpenAI && !useGemini) {
+    throw new Error('No AI provider configured. Set AI_PROVIDER=claude and provide ANTHROPIC_API_KEY (or configure OpenAI/Gemini). Ollama is disabled in this deployment.');
+}
+
 export interface ReviewResult {
     summary: string;
     riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
