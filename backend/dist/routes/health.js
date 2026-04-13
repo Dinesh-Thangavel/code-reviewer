@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = require("express");
-const ollamaClient_1 = require("../ai/ollamaClient");
 const geminiClient_1 = require("../ai/geminiClient");
 const claudeClient_1 = require("../ai/claudeClient");
 const openaiClient_1 = require("../ai/openaiClient");
@@ -31,8 +30,8 @@ exports.router.get('/', async (_req, res) => {
         providerName = 'gemini';
     }
     else {
-        aiHealth = await (0, ollamaClient_1.checkOllamaHealth)();
-        providerName = 'ollama';
+        aiHealth = { available: false, message: 'No AI provider configured' };
+        providerName = 'none';
     }
     res.json({
         status: 'ok',
@@ -42,19 +41,9 @@ exports.router.get('/', async (_req, res) => {
         },
     });
 });
+// Ollama endpoint kept for compatibility but returns disabled
 exports.router.get('/ollama', async (_req, res) => {
-    try {
-        const result = await (0, ollamaClient_1.checkOllamaHealth)();
-        if (result.available) {
-            res.json({ status: 'ok', ...result });
-        }
-        else {
-            res.status(503).json({ status: 'unavailable', ...result });
-        }
-    }
-    catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
-    }
+    res.status(200).json({ status: 'disabled', message: 'Ollama is not enabled on this deployment' });
 });
 /**
  * Database connectivity health check

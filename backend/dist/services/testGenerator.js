@@ -5,7 +5,9 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.analyzeTestCoverage = exports.generateTests = void 0;
-const ollamaClient_1 = require("../ai/ollamaClient");
+const claudeClient_1 = require("../ai/claudeClient");
+const openaiClient_1 = require("../ai/openaiClient");
+const geminiClient_1 = require("../ai/geminiClient");
 /**
  * Generate unit tests for a function or code block
  */
@@ -43,25 +45,13 @@ ${existingTests}
 
 **Output**: Return only the test code, no explanations.
 `;
-    try {
-        const response = await (0, ollamaClient_1.ollamaChat)([
-            {
-                role: 'system',
-                content: 'You are an expert at writing unit tests. Generate high-quality, comprehensive test code.',
-            },
-            {
-                role: 'user',
-                content: prompt,
-            },
-        ], {
-            temperature: 0.3, // Lower temperature for more consistent test generation
-            format: '', // Plain text
-        });
-        return response.trim();
-    }
-    catch (error) {
-        throw new Error(`Failed to generate tests: ${error.message}`);
-    }
+    const provider = selectProvider();
+    const messages = [
+        { role: 'system', content: 'You are an expert at writing unit tests. Generate high-quality, comprehensive test code.' },
+        { role: 'user', content: prompt },
+    ];
+    const response = await callProvider(provider, messages, { temperature: 0.3 });
+    return response.trim();
 };
 exports.generateTests = generateTests;
 /**
@@ -104,20 +94,13 @@ Provide a JSON response with:
 
 Return only valid JSON, no markdown.
 `;
+    const provider = selectProvider();
+    const messages = [
+        { role: 'system', content: 'You are a test coverage analysis expert. Analyze test coverage and provide detailed feedback.' },
+        { role: 'user', content: prompt },
+    ];
     try {
-        const response = await (0, ollamaClient_1.ollamaChat)([
-            {
-                role: 'system',
-                content: 'You are a test coverage analysis expert. Analyze test coverage and provide detailed feedback.',
-            },
-            {
-                role: 'user',
-                content: prompt,
-            },
-        ], {
-            temperature: 0.2,
-            format: 'json',
-        });
+        const response = await callProvider(provider, messages, { temperature: 0.2, format: 'json' });
         // Parse JSON response
         let cleanResponse = response.trim();
         if (cleanResponse.startsWith('```json')) {
@@ -147,3 +130,25 @@ Return only valid JSON, no markdown.
     }
 };
 exports.analyzeTestCoverage = analyzeTestCoverage;
+const selectProvider = () => {
+    const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
+    const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLowerCase() === 'anthropic') && !!process.env.ANTHROPIC_API_KEY;
+    const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
+    const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY;
+    if (useClaude)
+        return 'claude';
+    if (useOpenAI)
+        return 'openai';
+    if (useGemini)
+        return 'gemini';
+    throw new Error('No AI provider configured. Set AI_PROVIDER and API key.');
+};
+const callProvider = async (provider, messages, options) => {
+    if (provider === 'claude') {
+        return (0, claudeClient_1.claudeChat)(messages, options);
+    }
+    if (provider === 'openai') {
+        return (0, openaiClient_1.openaiChat)(messages, options);
+    }
+    return (0, geminiClient_1.geminiChat)(messages, options);
+};

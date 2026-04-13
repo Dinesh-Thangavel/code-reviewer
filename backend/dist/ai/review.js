@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reviewPullRequest = void 0;
-const ollamaClient_1 = require("./ollamaClient");
+// Ollama removed
 const geminiClient_1 = require("./geminiClient");
 const claudeClient_1 = require("./claudeClient");
 const openaiClient_1 = require("./openaiClient");
@@ -11,11 +11,14 @@ const language_1 = require("../utils/language");
 const reviewRules_1 = require("./reviewRules");
 const breakingChangeDetector_1 = require("../services/breakingChangeDetector");
 // Determine which AI provider to use (CodeRabbit uses Claude primarily)
-// Priority: Claude > GPT-4 > Gemini > Ollama
+// Priority: Claude > GPT-4 > Gemini
 const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
 const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLowerCase() === 'anthropic') && !!process.env.ANTHROPIC_API_KEY;
 const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
 const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY && !useClaude && !useOpenAI;
+if (!useClaude && !useOpenAI && !useGemini) {
+    throw new Error('No AI provider configured. Set AI_PROVIDER=claude and provide ANTHROPIC_API_KEY (or configure OpenAI/Gemini).');
+}
 // Helper function to count lines in a diff patch
 const countLinesInPatch = (patch) => {
     if (!patch)
@@ -48,8 +51,11 @@ const CWE_BY_CATEGORY = {
 };
 const reviewPullRequest = async (files, progressCallback, options) => {
     const securityOnly = options?.securityOnly || false;
-    const modelName = useClaude ? claudeClient_1.CLAUDE_MODEL_NAME : useOpenAI ? openaiClient_1.OPENAI_MODEL_NAME : useGemini ? geminiClient_1.GEMINI_MODEL_NAME : ollamaClient_1.OLLAMA_MODEL;
-    const providerName = useClaude ? 'Claude (CodeRabbit-style)' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+    if (!useClaude && !useOpenAI && !useGemini) {
+        throw new Error('No AI provider configured. Set AI_PROVIDER and API key.');
+    }
+    const modelName = useClaude ? claudeClient_1.CLAUDE_MODEL_NAME : useOpenAI ? openaiClient_1.OPENAI_MODEL_NAME : geminiClient_1.GEMINI_MODEL_NAME;
+    const providerName = useClaude ? 'Claude (CodeRabbit-style)' : useOpenAI ? 'GPT-4' : 'Gemini';
     const reviewMode = securityOnly ? 'SECURITY-ONLY' : 'FULL';
     console.log(`[AI/${providerName}] Starting ${reviewMode} review for ${files.length} files using model: ${modelName}`);
     const MAX_FILES = 25;
@@ -98,7 +104,7 @@ const reviewPullRequest = async (files, progressCallback, options) => {
             // Chunking Logic - Skip very large files to avoid timeouts
             const MAX_FILE_SIZE = 10000; // Skip files larger than 10KB
             if (file.patch.length > MAX_FILE_SIZE) {
-                console.log(`[AI/Ollama] Skipping very large file ${file.filename} (${file.patch.length} chars > ${MAX_FILE_SIZE} limit)`);
+                console.log(`[AI] Skipping very large file ${file.filename} (${file.patch.length} chars > ${MAX_FILE_SIZE} limit)`);
                 return {
                     summary: `File ${file.filename} is too large to review (${file.patch.length} chars). Skipped.`,
                     issues: [],
@@ -108,8 +114,8 @@ const reviewPullRequest = async (files, progressCallback, options) => {
                 };
             }
             // Improved chunking: split by diff hunks to preserve line number context
-            // Claude/GPT-4 can handle larger chunks, Ollama/Gemini need smaller
-            const MAX_CHUNK_SIZE = useClaude || useOpenAI ? 8000 : useGemini ? 4000 : 3000;
+            // Claude/GPT-4 can handle larger chunks; Gemini needs smaller
+            const MAX_CHUNK_SIZE = useClaude || useOpenAI ? 8000 : 4000;
             const patches = [];
             if (file.patch.length > MAX_CHUNK_SIZE) {
                 console.log(`[AI/${providerName}] File ${file.filename} is too large (${file.patch.length} chars). Splitting into chunks while preserving context...`);
@@ -208,8 +214,7 @@ const reviewPullRequest = async (files, progressCallback, options) => {
                         );
                     }
                     else {
-                        content = await (0, ollamaClient_1.ollamaChat)([{ role: 'system', content: prompt }], { temperature: 0.1, format: 'json' } // Ollama: 0.1 for accuracy
-                        );
+                        throw new Error('No AI provider configured. Set AI_PROVIDER and API key.');
                     }
                     if (!content) {
                         console.error(`[AI] Empty response for chunk ${index} of ${file.filename}`);
@@ -255,7 +260,7 @@ const reviewPullRequest = async (files, progressCallback, options) => {
                     return validated;
                 }
                 catch (e) {
-                    const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+                    const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'none';
                     console.error(`[AI/${providerName}] Failed to review chunk ${index} of ${file.filename}:`, e.message);
                     console.error(`[AI/${providerName}] Error stack:`, e.stack);
                     if (e.response) {
@@ -311,7 +316,7 @@ Return this exact JSON structure:
                             ? await (0, openaiClient_1.openaiChat)([{ role: 'user', content: simplePrompt }], { temperature: 0.1, format: 'json' })
                             : useGemini
                                 ? await (0, geminiClient_1.geminiChat)([{ role: 'user', content: simplePrompt }], { temperature: 0.1, format: 'json' })
-                                : await (0, ollamaClient_1.ollamaChat)([{ role: 'user', content: simplePrompt }], { temperature: 0.1, format: 'json' });
+                                : null;
                     if (fallbackContent) {
                         console.log(`[AI] Fallback response received, length: ${fallbackContent.length}`);
                         console.log(`[AI] Fallback response preview:`, fallbackContent.substring(0, 500));
@@ -451,7 +456,7 @@ Return this exact JSON structure:
             };
         }
         catch (error) {
-            const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+            const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : 'Gemini';
             console.error(`[AI/${providerName}] Failed to review file ${file.filename}:`, error.message);
             console.error(`[AI/${providerName}] Error stack:`, error.stack);
             console.error(`[AI/${providerName}] File patch length:`, file.patch.length);
@@ -573,7 +578,7 @@ ${nextSteps}
         }
     }
     catch (error) {
-        const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+        const providerName = useClaude ? 'Claude' : useOpenAI ? 'GPT-4' : 'Gemini';
         console.error(`[AI/${providerName}] Error detecting breaking changes:`, error);
     }
     const finalSummaryWithBreakingChanges = finalSummary + breakingChangesReport;

@@ -172,7 +172,7 @@ const selectProvider = (): Provider => {
 const callProvider = async (
     provider: Provider,
     messages: ChatMessage[],
-    options: { temperature?: number; format?: string }
+    options: { temperature?: number; format?: 'json' | '' }
 ): Promise<string> => {
     if (provider === 'claude') {
         return claudeChat(messages, options);

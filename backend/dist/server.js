@@ -75,10 +75,8 @@ else if (useGemini) {
     console.log(`🤖 AI Provider: Google Gemini — Model: ${geminiModel}`);
 }
 else {
-    const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-    const ollamaModel = process.env.OLLAMA_MODEL || 'llama3';
-    console.log(`🤖 AI Provider: Ollama (${ollamaUrl}) — Model: ${ollamaModel}`);
-    console.log(`⚠️  For CodeRabbit-level reviews, use Claude or GPT-4. Set AI_PROVIDER=claude and ANTHROPIC_API_KEY`);
+    console.error('❌ No AI provider configured. Set AI_PROVIDER and corresponding API key.');
+    process.exit(1);
 }
 // Only start the BullMQ worker if Redis is configured
 const hasRedis = !!(process.env.REDIS_HOST || process.env.REDIS_URL);
