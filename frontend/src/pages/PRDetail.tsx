@@ -635,7 +635,7 @@ export function PRDetail() {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="h-[300px] min-w-0">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
+                    <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={300}>
                       <PieChart>
                         <Pie
                           data={pieChartData}

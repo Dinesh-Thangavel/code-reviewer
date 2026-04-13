@@ -227,8 +227,8 @@ export function Insights() {
             <CardDescription>Distribution of issues by type</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="w-full h-[280px] min-w-0">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+            <div className="w-full h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={280}>
               <BarChart
                 data={insights.mostCommonIssueTypes}
                 layout="vertical"
@@ -268,8 +268,8 @@ export function Insights() {
           <CardContent>
             {insights.issuesPerLanguage && insights.issuesPerLanguage.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="h-[260px] min-w-0 relative overflow-visible">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={260}>
+                  <div className="h-[300px] min-w-0 relative overflow-visible">
+                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={260}>
                     <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                       <Pie
                         data={insights.issuesPerLanguage}
@@ -329,8 +329,8 @@ export function Insights() {
             <CardDescription>Risk level distribution over the last 8 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="w-full h-[300px] min-w-0">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
+              <div className="w-full h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={300}>
                 <LineChart data={riskTrendData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
