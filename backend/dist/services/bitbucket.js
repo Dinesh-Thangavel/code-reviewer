@@ -3,6 +3,39 @@
  * Bitbucket Service
  * Handles Bitbucket API operations for pull requests and repositories
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -137,8 +170,31 @@ const handleBitbucketPullRequestOpened = async (payload) => {
             return { success: true, jobId: job.id, prId: pr.id };
         }
         else {
-            console.error(`[Bitbucket] ❌ Redis unavailable – cannot enqueue review for ${repository.full_name} #${pull_request.id}`);
-            return { success: false, error: 'Redis unavailable' };
+            console.error(`[Bitbucket] ❌ Redis unavailable – running inline review fallback for ${repository.full_name} #${pull_request.id}`);
+            try {
+                const { executeReview } = await Promise.resolve().then(() => __importStar(require('./reviewExecutor')));
+                setImmediate(async () => {
+                    try {
+                        await executeReview({
+                            repoFullName: repository.full_name,
+                            prNumber: pull_request.id,
+                            provider: 'BITBUCKET',
+                            commitSha: pull_request.source.commit.hash,
+                            userId: userId,
+                            force: true,
+                        });
+                        console.log(`[Bitbucket] ✅ Inline fallback review finished for ${repository.full_name} #${pull_request.id}`);
+                    }
+                    catch (err) {
+                        console.error(`[Bitbucket] ❌ Inline fallback review failed:`, err.message);
+                    }
+                });
+            }
+            catch (err) {
+                console.error(`[Bitbucket] ❌ Unable to start inline fallback review:`, err.message);
+                return { success: false, error: 'Redis unavailable and inline fallback failed to start' };
+            }
+            return { success: true, skipped: true, reason: 'inline-review-started' };
         }
     }
     catch (error) {

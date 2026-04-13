@@ -46,6 +46,7 @@ const db_1 = __importDefault(require("../db"));
 const crypto = __importStar(require("crypto"));
 const auditLog_1 = require("../services/auditLog");
 const jwt_1 = require("../utils/jwt");
+const frontendUrl_1 = require("../utils/frontendUrl");
 /**
  * Initiate Bitbucket OAuth flow
  * Supports both authenticated users (connecting account) and unauthenticated (sign in)
@@ -88,7 +89,7 @@ const handleOAuthCallback = async (req, res) => {
     try {
         const { code, state } = req.query;
         if (!code || !state) {
-            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=missing_params`);
+            return res.redirect(`${(0, frontendUrl_1.getFrontendBaseUrl)()}/login?error=missing_params`);
         }
         // Verify state
         const stateVerification = (0, bitbucketOAuth_1.verifyState)(state);
@@ -98,7 +99,7 @@ const handleOAuthCallback = async (req, res) => {
                 valid: stateVerification.valid,
                 userId: stateVerification.userId,
             });
-            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=invalid_state`);
+            return res.redirect(`${(0, frontendUrl_1.getFrontendBaseUrl)()}/login?error=invalid_state`);
         }
         console.log('[Bitbucket OAuth] State verified successfully:', {
             userId: stateVerification.userId,
@@ -286,7 +287,7 @@ const handleOAuthCallback = async (req, res) => {
                 // Don't fail the OAuth flow if repo fetching fails
             }
             // Redirect to repositories page (CodeRabbit-style: show repos immediately)
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/callback?token=${token}&bitbucket_signin=true&redirect=repositories`);
+            res.redirect(`${(0, frontendUrl_1.getFrontendBaseUrl)()}/auth/callback?token=${token}&bitbucket_signin=true&redirect=repositories`);
         }
         else {
             // Connect mode: Update existing user
@@ -363,7 +364,7 @@ const handleOAuthCallback = async (req, res) => {
                 // Don't fail the OAuth flow if repo fetching fails
             }
             // Redirect to repositories page with success
-            res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/repositories?bitbucket_connected=true`);
+            res.redirect(`${(0, frontendUrl_1.getFrontendBaseUrl)()}/repositories?bitbucket_connected=true`);
         }
     }
     catch (error) {
@@ -375,7 +376,7 @@ const handleOAuthCallback = async (req, res) => {
             response: error.response?.data,
         });
         const errorMessage = error.message || 'oauth_failed';
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=${encodeURIComponent(errorMessage)}`);
+        res.redirect(`${(0, frontendUrl_1.getFrontendBaseUrl)()}/login?error=${encodeURIComponent(errorMessage)}`);
     }
 };
 exports.handleOAuthCallback = handleOAuthCallback;

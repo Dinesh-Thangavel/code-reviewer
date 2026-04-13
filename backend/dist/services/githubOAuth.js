@@ -43,9 +43,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserRepositories = exports.decryptToken = exports.encryptToken = exports.getGitHubUser = exports.exchangeCodeForToken = exports.verifyState = exports.getOAuthUrl = void 0;
 const axios_1 = __importDefault(require("axios"));
 const crypto = __importStar(require("crypto"));
-const GITHUB_CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || '';
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_OAUTH_CLIENT_SECRET || '';
-const GITHUB_REDIRECT_URI = process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:5000/api/auth/github/callback';
+const GITHUB_CLIENT_ID = (process.env.GITHUB_OAUTH_CLIENT_ID || '').trim();
+const GITHUB_CLIENT_SECRET = (process.env.GITHUB_OAUTH_CLIENT_SECRET || '').trim();
+const GITHUB_REDIRECT_URI = (process.env.GITHUB_OAUTH_REDIRECT_URI || 'http://localhost:5000/api/auth/github/callback').trim();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 // Log OAuth configuration on startup (without secrets)
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
@@ -131,7 +131,9 @@ const exchangeCodeForToken = async (code) => {
         });
         if (response.data.error) {
             console.error('[OAuth] GitHub returned error:', response.data);
-            throw new Error(response.data.error_description || response.data.error);
+            const gh = response.data.error;
+            const desc = response.data.error_description || '';
+            throw new Error(desc ? `${gh}: ${desc}` : String(gh));
         }
         if (!response.data.access_token) {
             throw new Error('GitHub did not return an access token');
@@ -153,28 +155,39 @@ exports.exchangeCodeForToken = exchangeCodeForToken;
  */
 const getGitHubUser = async (token) => {
     try {
-        const [userResponse, emailsResponse] = await Promise.all([
-            axios_1.default.get('https://api.github.com/user', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
-                },
-            }),
-            axios_1.default.get('https://api.github.com/user/emails', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
-                },
-            }),
-        ]);
+        const userResponse = await axios_1.default.get('https://api.github.com/user', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.github.v3+json',
+            },
+        });
         const user = userResponse.data;
-        const emails = emailsResponse.data;
+        let emails = [];
+        try {
+            const emailsResponse = await axios_1.default.get('https://api.github.com/user/emails', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            emails = Array.isArray(emailsResponse.data) ? emailsResponse.data : [];
+        }
+        catch (emailError) {
+            // Some GitHub token types can access /user but not /user/emails.
+            // Do not fail OAuth just because private emails are unavailable.
+            console.warn('[OAuth] Could not fetch /user/emails, falling back to /user email:', {
+                status: emailError?.response?.status,
+                message: emailError?.message,
+            });
+        }
         const primaryEmail = emails.find((e) => e.primary)?.email || emails[0]?.email || user.email;
+        // Prisma requires email; GitHub may return none if email is private and scopes/emails empty
+        const email = primaryEmail || `${user.id}+${user.login}@users.noreply.github.com`;
         return {
             id: user.id,
             login: user.login,
             name: user.name || user.login,
-            email: primaryEmail,
+            email,
             avatar_url: user.avatar_url,
         };
     }

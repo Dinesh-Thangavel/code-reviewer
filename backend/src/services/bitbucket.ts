@@ -194,8 +194,29 @@ export const handleBitbucketPullRequestOpened = async (payload: {
             console.log(`[Bitbucket] ✅ Enqueued review-pr for ${repository.full_name} #${pull_request.id} (Job ID: ${job.id})`);
             return { success: true, jobId: job.id, prId: pr.id };
         } else {
-            console.error(`[Bitbucket] ❌ Redis unavailable – cannot enqueue review for ${repository.full_name} #${pull_request.id}`);
-            return { success: false, error: 'Redis unavailable' };
+            console.error(`[Bitbucket] ❌ Redis unavailable – running inline review fallback for ${repository.full_name} #${pull_request.id}`);
+            try {
+                const { executeReview } = await import('./reviewExecutor');
+                setImmediate(async () => {
+                    try {
+                        await executeReview({
+                            repoFullName: repository.full_name,
+                            prNumber: pull_request.id,
+                            provider: 'BITBUCKET',
+                            commitSha: pull_request.source.commit.hash,
+                            userId: userId,
+                            force: true,
+                        });
+                        console.log(`[Bitbucket] ✅ Inline fallback review finished for ${repository.full_name} #${pull_request.id}`);
+                    } catch (err: any) {
+                        console.error(`[Bitbucket] ❌ Inline fallback review failed:`, err.message);
+                    }
+                });
+            } catch (err: any) {
+                console.error(`[Bitbucket] ❌ Unable to start inline fallback review:`, err.message);
+                return { success: false, error: 'Redis unavailable and inline fallback failed to start' };
+            }
+            return { success: true, skipped: true, reason: 'inline-review-started' };
         }
     } catch (error: any) {
         console.error(`[Bitbucket] ❌ Error handling PR opened for ${repository.full_name} #${pull_request.id}:`, error);

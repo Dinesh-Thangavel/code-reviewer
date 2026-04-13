@@ -125,50 +125,33 @@ const handlePullRequestOpened = async (payload) => {
             return { success: true, jobId: job.id, prId: pr.id };
         }
         else {
-            console.error(`[GitHub] ❌ Redis unavailable – cannot enqueue review for ${repository.full_name} #${pull_request.number}`);
-            // Fallback: try to trigger review directly (synchronous, but better than nothing)
-            console.log(`[GitHub] Attempting direct review trigger as fallback...`);
+            console.error(`[GitHub] ❌ Redis unavailable – running inline review fallback for ${repository.full_name} #${pull_request.number}`);
             try {
-                const { reviewPullRequest } = await Promise.resolve().then(() => __importStar(require('../ai/review')));
-                const { getPullRequestFiles } = await Promise.resolve().then(() => __importStar(require('./githubApi')));
-                const { getInstallationAccessToken } = await Promise.resolve().then(() => __importStar(require('./githubApi')));
-                if (payload.installation?.id) {
-                    const token = await getInstallationAccessToken(payload.installation.id.toString());
-                    const files = await getPullRequestFiles(repository.full_name, pull_request.number, payload.installation.id.toString());
-                    if (files.length > 0) {
-                        // Default to full review (securityOnly can be configured per repo later)
-                        const reviewResult = await reviewPullRequest(files, undefined, { securityOnly: false });
-                        // Create review record
-                        await db_1.default.review.create({
-                            data: {
-                                prId: pr.id,
-                                summary: reviewResult.summary,
-                                confidenceScore: reviewResult.confidenceScore,
-                                riskLevel: reviewResult.riskLevel,
-                                status: 'COMPLETED',
-                                filesChanged: files.length,
-                                issues: {
-                                    create: reviewResult.issues.map((issue) => ({
-                                        severity: issue.severity,
-                                        filePath: issue.file,
-                                        lineNumber: issue.line,
-                                        title: issue.title,
-                                        description: issue.description,
-                                        suggestedFix: issue.suggestedFix || '',
-                                        language: issue.language || 'plaintext',
-                                    })),
-                                },
-                            },
+                const { executeReview } = await Promise.resolve().then(() => __importStar(require('./reviewExecutor')));
+                // Kick off async so webhook response isn't blocked
+                setImmediate(async () => {
+                    try {
+                        await executeReview({
+                            repoFullName: repository.full_name,
+                            prNumber: pull_request.number,
+                            provider: 'GITHUB',
+                            installationId: payload.installation?.id?.toString(),
+                            commitSha: pull_request.head.sha,
+                            securityOnly: false,
+                            force: true,
                         });
-                        console.log(`[GitHub] ✅ Direct review completed for ${repository.full_name} #${pull_request.number}`);
-                        return { success: true, directReview: true, prId: pr.id };
+                        console.log(`[GitHub] ✅ Inline fallback review finished for ${repository.full_name} #${pull_request.number}`);
                     }
-                }
+                    catch (fallbackError) {
+                        console.error(`[GitHub] ❌ Inline fallback review failed:`, fallbackError.message);
+                    }
+                });
             }
             catch (fallbackError) {
-                console.error(`[GitHub] ❌ Direct review fallback also failed:`, fallbackError.message);
+                console.error(`[GitHub] ❌ Unable to start inline fallback review:`, fallbackError.message);
+                return { success: false, error: 'Redis unavailable and inline fallback failed to start' };
             }
-            return { success: false, error: 'Redis unavailable and direct review failed' };
+            return { success: true, skipped: true, reason: 'inline-review-started' };
         }
     }
     catch (error) {

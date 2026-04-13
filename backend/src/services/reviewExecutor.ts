@@ -19,7 +19,7 @@ interface ExecuteReviewOptions {
     securityOnly?: boolean;
     force?: boolean;
     userId?: string | number; // required for Bitbucket
-    progressCallback?: (progress: any) => void;
+    progressCallback?: (progress: any, prId?: string) => void;
 }
 
 /**
@@ -36,7 +36,7 @@ export const executeReview = async ({
     force,
     userId,
     progressCallback,
-}: ExecuteReviewOptions): Promise<{ status: 'completed' | 'skipped' | 'failed'; reason?: string; reviewId?: number }> => {
+}: ExecuteReviewOptions): Promise<{ status: 'completed' | 'skipped' | 'failed'; reason?: string; reviewId?: string; prId?: string }> => {
     // 1) Fetch files (with retry similar to worker)
     let files;
     let retries = 0;
@@ -112,7 +112,11 @@ export const executeReview = async ({
 
     try {
         // 4) Run AI review
-        const reviewResult: ReviewResult = await reviewPullRequest(files, progressCallback, {
+        const wrappedProgress = progressCallback
+            ? (progress: any) => progressCallback(progress, pr.id)
+            : undefined;
+
+        const reviewResult: ReviewResult = await reviewPullRequest(files, wrappedProgress, {
             securityOnly: !!securityOnly,
         });
 
@@ -153,6 +157,8 @@ export const executeReview = async ({
             },
         });
 
+        const resolvedCommitSha = commitSha || pr.headSha;
+
         // 7) Post results back to provider
         if (provider === 'BITBUCKET') {
             if (!userId) throw new Error('userId required to post Bitbucket results');
@@ -165,11 +171,14 @@ export const executeReview = async ({
                 const [workspace, repoSlug] = repoFullName.split('/');
                 await postBitbucketReviewComment(token, workspace, repoSlug, prNumber, reviewResult);
                 await postBitbucketInlineComments(token, workspace, repoSlug, prNumber, reviewResult.issues);
+                if (!resolvedCommitSha) {
+                    throw new Error('Missing commit SHA for Bitbucket status update');
+                }
                 await postBitbucketStatus(
                     token,
                     workspace,
                     repoSlug,
-                    commitSha || pr.headSha,
+                    resolvedCommitSha,
                     'SUCCESSFUL',
                     `${process.env.FRONTEND_URL || 'http://localhost:5173'}/pull-requests/${pr.id}`,
                     'AI review completed'
@@ -198,9 +207,12 @@ export const executeReview = async ({
                 reviewEvent = 'REQUEST_CHANGES';
             }
 
+            if (!resolvedCommitSha) {
+                throw new Error('Missing commit SHA for GitHub status check');
+            }
             await createReviewStatusCheck(
                 repoFullName,
-                commitSha || pr.headSha,
+                resolvedCommitSha,
                 reviewResult,
                 installationId.toString(),
                 prNumber,
@@ -224,7 +236,7 @@ export const executeReview = async ({
             // non-critical
         }
 
-        return { status: 'completed', reviewId: review.id };
+        return { status: 'completed', reviewId: review.id, prId: pr.id };
     } catch (error: any) {
         await prisma.review.update({
             where: { id: review.id },
