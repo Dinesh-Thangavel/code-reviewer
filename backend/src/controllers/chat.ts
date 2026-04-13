@@ -3,7 +3,6 @@
  */
 
 import { Request, Response } from 'express';
-import { ollamaChat } from '../ai/ollamaClient';
 import { geminiChat } from '../ai/geminiClient';
 import { claudeChat } from '../ai/claudeClient';
 import { openaiChat } from '../ai/openaiClient';
@@ -35,10 +34,10 @@ export const chatWithAI = async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Question is required' });
     }
 
-    // Check if any AI provider is configured
-    if (!useClaude && !useOpenAI && !useGemini) {
-        console.warn('[Chat] No AI provider configured. Checking Ollama availability...');
-    }
+// Check if any AI provider is configured
+if (!useClaude && !useOpenAI && !useGemini) {
+    console.warn('[Chat] No AI provider configured. Please set AI_PROVIDER and an API key.');
+}
 
     try {
         // Fetch review and PR details
@@ -113,18 +112,11 @@ export const chatWithAI = async (req: Request, res: Response) => {
                     { temperature: 0.7 }
                 );
             } else {
-                console.log('[Chat] Using Ollama provider (fallback)');
-                response = await ollamaChat(
-                    [
-                        { role: 'system', content: systemMessage },
-                        { role: 'user', content: prompt },
-                    ],
-                    { temperature: 0.7, format: '' }
-                );
+                throw new Error('No AI provider configured. Please set AI_PROVIDER and API key.');
             }
         } catch (aiError: any) {
             console.error('[Chat] AI provider error:', {
-                provider: useClaude ? 'Claude' : useOpenAI ? 'OpenAI' : useGemini ? 'Gemini' : 'Ollama',
+                provider: useClaude ? 'Claude' : useOpenAI ? 'OpenAI' : useGemini ? 'Gemini' : 'none',
                 error: aiError.message,
                 stack: aiError.stack,
             });
@@ -137,15 +129,6 @@ export const chatWithAI = async (req: Request, res: Response) => {
                     details: 'Please configure an AI provider API key in your environment variables. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY.',
                 });
             }
-            
-            if (aiError.message.includes('Ollama is not running')) {
-                return res.status(500).json({
-                    error: 'Ollama not available',
-                    message: aiError.message,
-                    details: 'Ollama is not running. Please start Ollama or configure a cloud AI provider (Claude, OpenAI, or Gemini).',
-                });
-            }
-            
             if (aiError.message.includes('rate limit')) {
                 return res.status(429).json({
                     error: 'Rate limit exceeded',

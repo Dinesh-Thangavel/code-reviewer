@@ -25,8 +25,8 @@ router.get('/', async (_req, res) => {
         aiHealth = await checkGeminiHealth();
         providerName = 'gemini';
     } else {
-        aiHealth = { available: false, message: 'Ollama disabled' };
-        providerName = 'ollama';
+        aiHealth = { available: false, message: 'No AI provider configured' };
+        providerName = 'none';
     }
     
     res.json({
@@ -38,8 +38,8 @@ router.get('/', async (_req, res) => {
     });
 });
 
+// Ollama endpoint kept for compatibility but returns disabled
 router.get('/ollama', async (_req, res) => {
-    // Explicitly report that Ollama is not in use, but return 200 to avoid noisy client errors
     res.status(200).json({ status: 'disabled', message: 'Ollama is not enabled on this deployment' });
 });
 

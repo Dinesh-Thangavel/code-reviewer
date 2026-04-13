@@ -3,7 +3,9 @@
  * Generates documentation for functions and classes
  */
 
-import { ollamaChat } from '../ai/ollamaClient';
+import { claudeChat } from '../ai/claudeClient';
+import { openaiChat } from '../ai/openaiClient';
+import { geminiChat } from '../ai/geminiClient';
 
 export type DocstringFormat = 'jsdoc' | 'tsdoc' | 'python' | 'java' | 'go' | 'rust';
 
@@ -90,22 +92,39 @@ ${example}
 `;
 
     try {
-        const response = await ollamaChat(
-            [
-                {
-                    role: 'system',
-                    content: `You are a documentation expert. Generate high-quality ${format} docstrings.`,
-                },
-                {
-                    role: 'user',
-                    content: prompt,
-                },
-            ],
-            {
-                temperature: 0.3,
-                format: '', // Plain text
-            }
-        );
+        let response: string;
+        const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
+        const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLowerCase() === 'anthropic') && !!process.env.ANTHROPIC_API_KEY;
+        const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
+        const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY;
+
+        if (useClaude) {
+            response = await claudeChat(
+                [
+                    { role: 'system', content: `You are a documentation expert. Generate high-quality ${format} docstrings.` },
+                    { role: 'user', content: prompt },
+                ],
+                { temperature: 0.3 }
+            );
+        } else if (useOpenAI) {
+            response = await openaiChat(
+                [
+                    { role: 'system', content: `You are a documentation expert. Generate high-quality ${format} docstrings.` },
+                    { role: 'user', content: prompt },
+                ],
+                { temperature: 0.3 }
+            );
+        } else if (useGemini) {
+            response = await geminiChat(
+                [
+                    { role: 'system', content: `You are a documentation expert. Generate high-quality ${format} docstrings.` },
+                    { role: 'user', content: prompt },
+                ],
+                { temperature: 0.3 }
+            );
+        } else {
+            throw new Error('No AI provider configured for docstring generation. Set AI_PROVIDER and API key.');
+        }
 
         // Clean up response
         let docstring = response.trim();
@@ -153,22 +172,39 @@ Return only valid JSON, no markdown.
 `;
 
     try {
-        const response = await ollamaChat(
-            [
-                {
-                    role: 'system',
-                    content: `You are a documentation expert. Generate ${format} docstrings for all functions and classes.`,
-                },
-                {
-                    role: 'user',
-                    content: prompt,
-                },
-            ],
-            {
-                temperature: 0.3,
-                format: 'json',
-            }
-        );
+        let response: string;
+        const AI_PROVIDER = process.env.AI_PROVIDER || 'claude';
+        const useClaude = (AI_PROVIDER.toLowerCase() === 'claude' || AI_PROVIDER.toLowerCase() === 'anthropic') && !!process.env.ANTHROPIC_API_KEY;
+        const useOpenAI = (AI_PROVIDER.toLowerCase() === 'openai' || AI_PROVIDER.toLowerCase() === 'gpt') && !!process.env.OPENAI_API_KEY;
+        const useGemini = (AI_PROVIDER.toLowerCase() === 'gemini') && !!process.env.GEMINI_API_KEY;
+
+        if (useClaude) {
+            response = await claudeChat(
+                [
+                    { role: 'system', content: `You are a documentation expert. Generate ${format} docstrings for all functions and classes.` },
+                    { role: 'user', content: prompt },
+                ],
+                { temperature: 0.3, format: 'json' }
+            );
+        } else if (useOpenAI) {
+            response = await openaiChat(
+                [
+                    { role: 'system', content: `You are a documentation expert. Generate ${format} docstrings for all functions and classes.` },
+                    { role: 'user', content: prompt },
+                ],
+                { temperature: 0.3 }
+            );
+        } else if (useGemini) {
+            response = await geminiChat(
+                [
+                    { role: 'system', content: `You are a documentation expert. Generate ${format} docstrings for all functions and classes.` },
+                    { role: 'user', content: prompt },
+                ],
+                { temperature: 0.3 }
+            );
+        } else {
+            throw new Error('No AI provider configured for docstring generation. Set AI_PROVIDER and API key.');
+        }
 
         // Parse JSON
         let cleanResponse = response.trim();

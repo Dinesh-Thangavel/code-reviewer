@@ -1,5 +1,5 @@
 import { PRFile } from '../services/githubApi';
-import { ollamaChat, OLLAMA_MODEL } from './ollamaClient';
+// Ollama removed
 import { geminiChat, GEMINI_MODEL_NAME } from './geminiClient';
 import { claudeChat, CLAUDE_MODEL_NAME } from './claudeClient';
 import { openaiChat, OPENAI_MODEL_NAME } from './openaiClient';
@@ -80,8 +80,11 @@ export const reviewPullRequest = async (
     }
 ): Promise<ReviewResult> => {
     const securityOnly = options?.securityOnly || false;
-    const modelName = useClaude ? CLAUDE_MODEL_NAME : useOpenAI ? OPENAI_MODEL_NAME : useGemini ? GEMINI_MODEL_NAME : OLLAMA_MODEL;
-    const providerName = useClaude ? 'Claude (CodeRabbit-style)' : useOpenAI ? 'GPT-4' : useGemini ? 'Gemini' : 'Ollama';
+    if (!useClaude && !useOpenAI && !useGemini) {
+        throw new Error('No AI provider configured. Set AI_PROVIDER and API key.');
+    }
+    const modelName = useClaude ? CLAUDE_MODEL_NAME : useOpenAI ? OPENAI_MODEL_NAME : GEMINI_MODEL_NAME;
+    const providerName = useClaude ? 'Claude (CodeRabbit-style)' : useOpenAI ? 'GPT-4' : 'Gemini';
     const reviewMode = securityOnly ? 'SECURITY-ONLY' : 'FULL';
     console.log(`[AI/${providerName}] Starting ${reviewMode} review for ${files.length} files using model: ${modelName}`);
 
@@ -150,7 +153,7 @@ export const reviewPullRequest = async (
 
             // Improved chunking: split by diff hunks to preserve line number context
             // Claude/GPT-4 can handle larger chunks, Ollama/Gemini need smaller
-            const MAX_CHUNK_SIZE = useClaude || useOpenAI ? 8000 : useGemini ? 4000 : 3000;
+            const MAX_CHUNK_SIZE = useClaude || useOpenAI ? 8000 : 4000;
             const patches: string[] = [];
 
             if (file.patch.length > MAX_CHUNK_SIZE) {

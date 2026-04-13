@@ -314,13 +314,7 @@ export function Settings() {
               </div>
               <StatusBadge status={backendStatus} />
             </div>
-            <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 p-4">
-              <div>
-                <p className="text-sm font-medium">Ollama AI runtime</p>
-                <p className="text-xs text-muted-foreground">Needed for code review generation and related AI actions.</p>
-              </div>
-              <StatusBadge status={ollamaStatus} />
-            </div>
+            {/* Ollama removed */}
           </CardContent>
         </Card>
       </div>
